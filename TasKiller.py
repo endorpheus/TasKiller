@@ -6,19 +6,19 @@ import psutil
 from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QTableWidget,
     QTableWidgetItem, QAbstractItemView, QPushButton, QHeaderView,
-    QMessageBox, QInputDialog, QWidget
+    QMessageBox, QInputDialog, QWidget, QMenu
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
 
-from Jelly import Jelly  # Import the Jelly class
+from Jelly import Jelly  # Import the updated Jelly class
 
 # About
 AUTHOR = "Ryon Shane Hall"
 EMAIL = "endorpheus@gmail.com"
 CREATED = "202409230220"
-UPDATED = "202409231208"
-VERSION = "4.0"
+UPDATED = "202409231537"
+VERSION = "3.0"
 
 # Dummy processes to run (0 for no spawn)
 DUMMY = 0
@@ -72,9 +72,11 @@ class TasKiller(Jelly):
         return button
 
     def create_menu(self):
-        menu = QAction("About", self)
-        menu.triggered.connect(self.show_about_dialog)
-        self.addAction(menu)
+        menu = QMenu("Help", self)
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about_dialog)
+        menu.addAction(about_action)
+        self.add_menu(menu)
 
     def get_process_name(self) -> Optional[str]:
         if len(sys.argv) > 1:

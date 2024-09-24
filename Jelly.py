@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QSizePolicy, QMenuBar
 from PySide6.QtCore import Qt, QSize, QMargins, QDir, QPoint
 from PySide6.QtGui import QColor, QPainter, QBrush, QIcon, QMouseEvent
 
@@ -46,6 +46,15 @@ class Jelly(QDialog):
             QPushButton:hover {
                 background-color: rgba(44, 16, 70, 217);
             }
+            QMenuBar {
+                background-color: rgba(24, 6, 40, 217);
+                color: white;
+                border-top-left-radius: 15px;
+                border-top-right-radius: 15px;
+            }
+            QMenuBar::item:selected {
+                background-color: rgba(44, 16, 70, 217);
+            }
         """)
 
         # Set the window icon
@@ -54,13 +63,17 @@ class Jelly(QDialog):
 
         # Layout for the dialog
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(QMargins(20, 10, 20, 20))  # Reduced top margin
+        self.main_layout.setContentsMargins(QMargins(20, 10, 20, 20))
         self.main_layout.setSpacing(10)
 
-        # Horizontal layout for the buttons
-        self.button_layout = QHBoxLayout()
-        self.button_layout.setContentsMargins(self.button_margin, 0, self.button_margin, 0)  # Removed top margin
-        self.button_layout.setSpacing(self.button_spacing)
+        # Horizontal layout for the buttons and menu
+        self.top_layout = QHBoxLayout()
+        self.top_layout.setContentsMargins(self.button_margin, 0, self.button_margin, 0)
+        self.top_layout.setSpacing(self.button_spacing)
+
+        # Add menu bar
+        self.menu_bar = QMenuBar()
+        self.top_layout.addWidget(self.menu_bar, 1)
 
         # Minimize button
         self.minimize_button = QPushButton()
@@ -94,18 +107,17 @@ class Jelly(QDialog):
         """)
         self.close_button.clicked.connect(self.close)
         
-        # Add the buttons to the button layout
-        self.button_layout.addStretch()
-        self.button_layout.addWidget(self.minimize_button)
-        self.button_layout.addWidget(self.close_button)
+        # Add the buttons to the top layout
+        self.top_layout.addWidget(self.minimize_button)
+        self.top_layout.addWidget(self.close_button)
 
-        # Add the button layout to the main layout
-        self.main_layout.addLayout(self.button_layout)
+        # Add the top layout to the main layout
+        self.main_layout.addLayout(self.top_layout)
 
         # Content Layout
         self.content_layout = QVBoxLayout()
         self.content_layout.setSpacing(10)
-        self.content_layout.setContentsMargins(0, 5, 0, 0)  # Reduced top margin
+        self.content_layout.setContentsMargins(0, 5, 0, 0)
 
         # Add the content layout to the main layout
         self.main_layout.addLayout(self.content_layout)
@@ -142,3 +154,6 @@ class Jelly(QDialog):
     def setLayout(self, layout):
         self.content_layout = layout
         self.main_layout.addLayout(self.content_layout)
+
+    def add_menu(self, menu):
+        self.menu_bar.addMenu(menu)
