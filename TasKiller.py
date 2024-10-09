@@ -1,48 +1,60 @@
 import sys
 from typing import List, Optional
-
+import argparse
 import psutil
 
 from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QTableWidget,
     QTableWidgetItem, QAbstractItemView, QPushButton, QHeaderView,
-    QMessageBox, QInputDialog, QWidget, QMenu
+    QMessageBox, QInputDialog, QWidget, QMenu, QHBoxLayout, QLineEdit, QLabel
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
 
-from Jelly import Jelly  # Import the updated Jelly class
+from Jelly import Jelly
 
 # About
 AUTHOR = "Ryon Shane Hall"
 EMAIL = "endorpheus@gmail.com"
 CREATED = "202409230220"
-UPDATED = "202409231537"
-VERSION = "3.0"
+UPDATED = "202410080956"
+VERSION = "3.0.1"
 
-# Dummy processes to run (0 for no spawn)
-DUMMY = 0
 
 class TasKiller(Jelly):
-    def __init__(self):
+    def __init__(self, initial_search=""):
         super().__init__()
-        self.process_name = self.get_process_name()
-        if not self.process_name:
-            print("No process name provided. Exiting.")
-            sys.exit(0)
-
-        self.init_ui()
+        self.init_ui(initial_search)
         self.update_process_list()
         self.adjustSize()
 
-    def init_ui(self):
-        self.setWindowTitle(f"TasKiller - {self.process_name}")
+    def init_ui(self, initial_search):
+        self.setWindowTitle("TasKiller")
         self.resize(400, 300)  # Set initial size
 
         # Create a container widget for our content
         content_widget = QWidget()
         layout = QVBoxLayout(content_widget)
 
+        # Add search bar and count label
+        search_layout = QHBoxLayout()
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Search processes...")
+        self.search_bar.setText(initial_search)
+        self.search_bar.textChanged.connect(self.update_process_list)
+        
+        self.clear_button = QPushButton("X")
+        self.clear_button.clicked.connect(self.clear_search)
+        
+        self.count_label = QLabel("Matching: 0")
+        
+        search_layout.addWidget(self.search_bar)
+        search_layout.addWidget(self.clear_button)
+        search_layout.addWidget(self.count_label)
+        
+        layout.addLayout(search_layout)
+
+        # Add table widget
         self.table_widget = self.create_table_widget()
         layout.addWidget(self.table_widget)
 
@@ -72,37 +84,41 @@ class TasKiller(Jelly):
         return button
 
     def create_menu(self):
-        menu = QMenu("Help", self)
+        menu = QMenu("File", self)
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about_dialog)
         menu.addAction(about_action)
+        
+        # placeholder for 'kill window immediately' menu item
+
         self.add_menu(menu)
 
-    def get_process_name(self) -> Optional[str]:
-        if len(sys.argv) > 1:
-            return sys.argv[1]
-        name, ok = QInputDialog.getText(self, "Search for Process", "Enter process name:")
-        return name if ok else None
-
+    
     def update_process_list(self):
         self.table_widget.setRowCount(0)
-        matching_processes = self.get_matching_processes()
+        search_term = self.search_bar.text().lower()
+        matching_processes = self.get_matching_processes(search_term)
 
         if not matching_processes:
             print("No matching processes found.")
-            QMessageBox.information(self, "No Results", f"No processes matching '{self.process_name}' found.")
+            self.count_label.setText("Matching: 0")
             return
 
         for process in matching_processes:
             self.add_process_to_table(process)
 
+        self.count_label.setText(f"Matching: {len(matching_processes)}")
         print(f"Found {len(matching_processes)} matching processes.")
 
-    def get_matching_processes(self) -> List[dict]:
+    def get_matching_processes(self, search_term: str) -> List[dict]:
         return [
             process.info for process in psutil.process_iter(['pid', 'name'])
-            if self.process_name.lower() in process.info['name'].lower()
+            if search_term in process.info['name'].lower()
         ]
+    
+    def clear_search(self):
+        self.search_bar.clear()
+        self.update_process_list()
 
     def add_process_to_table(self, process: dict):
         row = self.table_widget.rowCount()
@@ -156,17 +172,28 @@ class TasKiller(Jelly):
         about_dialog.setText(f"TasKiller v{VERSION}\n{AUTHOR}\n{EMAIL}\nCreated: {CREATED}\nUpdated: {UPDATED}\nJust kill it.")
         about_dialog.show()
 
-def create_dummy_processes(count: int = DUMMY):
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="TasKiller - Process termination utility")
+    parser.add_argument("search", nargs="?", default="", help="Initial search criteria")
+    parser.add_argument("-v", "--version", action="version", version=f"TasKiller v{VERSION}")
+    parser.add_argument("-s", "--sleep", type=int, choices=range(6), default=0, 
+                        help="Number of sleep processes to spawn (0-5)")
+    return parser.parse_args()
+
+def create_dummy_processes(count: int):
     import subprocess
     for _ in range(count):
         subprocess.Popen(["sleep", "300"])
     print(f"Created {count} dummy 'sleep' processes.")
 
+
 if __name__ == "__main__":
-    if DUMMY > 0:
-        create_dummy_processes()
+    args = parse_arguments()
+    
+    if args.sleep > 0:
+        create_dummy_processes(args.sleep)
 
     app = QApplication(sys.argv)
-    window = TasKiller()
+    window = TasKiller(initial_search=args.search)
     window.show()
     sys.exit(app.exec())

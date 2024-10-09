@@ -63,7 +63,7 @@ class Jelly(QDialog):
 
         # Layout for the dialog
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(QMargins(20, 10, 20, 20))
+        self.main_layout.setContentsMargins(QMargins(10, 10, 10, 10))
         self.main_layout.setSpacing(10)
 
         # Horizontal layout for the buttons and menu
